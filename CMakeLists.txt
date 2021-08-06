@@ -10,7 +10,7 @@ set(CMAKE_PREFIX_PATH "libtorch")
 find_package(Torch REQUIRED)
 find_package(JACK REQUIRED)
 
-add_executable(pytroch_ddsp_rt main.cpp)
+add_executable(pytroch_ddsp_rt main.cpp JackConnection.cpp JackConnection.h)
 
 target_link_libraries(pytroch_ddsp_rt "${TORCH_LIBRARIES}" ${JACK_LIBRARIES})
 
