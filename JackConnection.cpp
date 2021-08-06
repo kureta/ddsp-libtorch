@@ -17,16 +17,24 @@ int JackConnection::process(jack_nframes_t nframes) {
     jack_default_audio_sample_t *out1, *out2;
     int i;
 
+    // TODO: There is a CUDA memory leak. I wonder where?
+    std::vector<torch::jit::IValue> inputs = {f0s.to(torch::kCUDA), amps.to(torch::kCUDA)};
+    torch::Tensor output = net.forward(inputs).toTensor().to(torch::kCPU);
+    auto buffer = static_cast<float *>(output.data_ptr());
+
     out1 = (jack_default_audio_sample_t *) jack_port_get_buffer(output_port1, nframes);
     out2 = (jack_default_audio_sample_t *) jack_port_get_buffer(output_port2, nframes);
 
+    // TODO: uses sine waves to control the synth with exact same parameters as python
     for (i = 0; i < nframes; i++) {
-        out1[i] = data.sine[data.left_phase];  /* left */
-        out2[i] = data.sine[data.right_phase];  /* right */
-        data.left_phase += 1;
-        if (data.left_phase >= TABLE_SIZE) data.left_phase -= TABLE_SIZE;
-        data.right_phase += 3; /* higher pitch so we can distinguish left and right. */
-        if (data.right_phase >= TABLE_SIZE) data.right_phase -= TABLE_SIZE;
+        out1[i] = buffer[i];
+        out2[i] = buffer[i];
+//        out1[i] = data.sine[data.left_phase];  /* left */
+//        out2[i] = data.sine[data.right_phase];  /* right */
+//        data.left_phase += 1;
+//        if (data.left_phase >= TABLE_SIZE) data.left_phase -= TABLE_SIZE;
+//        data.right_phase += 3; /* higher pitch so we can distinguish left and right. */
+//        if (data.right_phase >= TABLE_SIZE) data.right_phase -= TABLE_SIZE;
     }
 
     return 0;
@@ -76,7 +84,14 @@ JackConnection::JackConnection() {
         exit(1);
     }
 
-
+    try {
+        // Deserialize the ScriptModule from a file using torch::jit::load().
+        net = torch::jit::load("/home/kureta/Documents/repos/personal/ddsp-pytorch/zak.pt");
+    }
+    catch (const c10::Error &e) {
+        std::cerr << "error loading the model\n";
+        exit(-1);
+    }
 }
 
 void JackConnection::start() {
@@ -101,9 +116,4 @@ void JackConnection::start() {
     }
 
     jack_free(ports);
-}
-
-void JackConnection::init(std::vector<torch::jit::IValue> *_inputs, torch::jit::script::Module *_net) {
-    this->inputs = _inputs;
-    this->net = _net;
 }

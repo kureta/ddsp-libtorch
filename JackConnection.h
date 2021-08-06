@@ -31,8 +31,9 @@ private:
     const char **ports;
     paTestData data;
 
-    std::vector<torch::jit::IValue> *inputs;
-    torch::jit::script::Module *net;
+    torch::jit::script::Module net;
+    const torch::Tensor f0s = torch::ones({1, 1, 1}) * 440.f;
+    const torch::Tensor amps = torch::ones({1, 1, 1}) * .9;
 
     static void jack_shutdown(void *arg) {
         exit(1);
@@ -43,7 +44,6 @@ public:
     void close();
     void start();
     int process(jack_nframes_t nframes);
-    void init(std::vector<torch::jit::IValue> *_inputs, torch::jit::script::Module *_net);
 };
 
 
