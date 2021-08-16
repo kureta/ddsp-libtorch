@@ -5,7 +5,6 @@
 #ifndef PYTROCH_DDSP_RT_JACKCONNECTION_H
 #define PYTROCH_DDSP_RT_JACKCONNECTION_H
 
-#include <torch/script.h> // One-stop header.
 #include <jack/jack.h>
 #include <cstdlib>
 #include <valarray>
@@ -30,10 +29,8 @@ private:
     jack_client_t *client;
     const char **ports;
     paTestData data;
-
-    torch::jit::script::Module net;
-    const torch::Tensor f0s = torch::ones({1, 1, 1}) * 440.f;
-    const torch::Tensor amps = torch::ones({1, 1, 1}) * .9;
+    bool* isNew;
+    float* buffer;
 
     static void jack_shutdown(void *arg) {
         exit(1);
@@ -41,8 +38,11 @@ private:
 
 public:
     JackConnection();
+
     void close();
+
     void start();
+
     int process(jack_nframes_t nframes);
 };
 
