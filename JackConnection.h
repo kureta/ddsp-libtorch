@@ -11,26 +11,13 @@
 #include <vector>
 
 
-#ifndef M_PI
-#define M_PI  (3.14159265)
-#endif
-
-#define TABLE_SIZE   (200)
-typedef struct {
-    float sine[TABLE_SIZE];
-    int left_phase;
-    int right_phase;
-} paTestData;
-
-
 class JackConnection {
 private:
     jack_port_t *output_port1, *output_port2;
     jack_client_t *client;
     const char **ports;
-    paTestData data;
-    bool* isNew;
-    float* buffer;
+    bool *isNew;
+    float *buffer;
 
     static void jack_shutdown(void *arg) {
         exit(1);
@@ -41,7 +28,7 @@ public:
 
     void close();
 
-    void start(bool* _is_new);
+    void start(bool *_is_new, float *_buffer);
 
     int process(jack_nframes_t nframes);
 };

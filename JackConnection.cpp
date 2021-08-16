@@ -3,6 +3,7 @@
 //
 
 #include <cstdio>
+#include <iostream>
 #include "JackConnection.h"
 
 int process_callback(jack_nframes_t nframes, void *arg) {
@@ -14,23 +15,21 @@ void JackConnection::close() {
 }
 
 int JackConnection::process(jack_nframes_t nframes) {
+    if (!*this->isNew) {
+        std::cout << " XRUN!!!!" << std::endl;
+    }
+
     jack_default_audio_sample_t *out1, *out2;
 
     out1 = (jack_default_audio_sample_t *) jack_port_get_buffer(output_port1, nframes);
     out2 = (jack_default_audio_sample_t *) jack_port_get_buffer(output_port2, nframes);
 
-    // TODO: uses sine waves to control the synth with exact same parameters as python
     for (int i = 0; i < nframes; i++) {
-        out1[i] = data.sine[data.left_phase];  /* left */
-        out2[i] = data.sine[data.right_phase];  /* right */
-        data.left_phase += 1;
-        if (data.left_phase >= TABLE_SIZE) data.left_phase -= TABLE_SIZE;
-        data.right_phase += 3; /* higher pitch so we can distinguish left and right. */
-        if (data.right_phase >= TABLE_SIZE) data.right_phase -= TABLE_SIZE;
+        out1[i] = this->buffer[i];
+        out2[i] = this->buffer[i];
     }
 
     *this->isNew = false;
-
     return 0;
 }
 
@@ -39,11 +38,6 @@ JackConnection::JackConnection() {
     const char *client_name = "zak-rt";
     jack_options_t options = JackNullOption;
     jack_status_t status;
-
-    for (int i = 0; i < TABLE_SIZE; i++) {
-        data.sine[i] = 0.2f * (float) sin(((double) i / (double) TABLE_SIZE) * M_PI * 2.);
-    }
-    data.left_phase = data.right_phase = 0;
 
     client = jack_client_open(client_name, options, &status, server_name);
     if (client == nullptr) {
@@ -79,8 +73,10 @@ JackConnection::JackConnection() {
     }
 }
 
-void JackConnection::start(bool* _is_new) {
+void JackConnection::start(bool *_is_new, float *_buffer) {
     this->isNew = _is_new;
+    this->buffer = _buffer;
+
     if (jack_activate(client)) {
         fprintf(stderr, "cannot activate client");
         exit(1);

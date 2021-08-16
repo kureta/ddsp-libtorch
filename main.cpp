@@ -24,7 +24,7 @@ static void signal_handler(int sig) {
 static void inference_loop() {
     torch::NoGradGuard no_grad;
     while (isRunning) {
-        while (*isNew) {
+        while (*isNew && isRunning) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -46,7 +46,7 @@ int main(int argc, const char *argv[]) {
     *isNew = false;
     std::thread inference(inference_loop);
 
-    jack.start(isNew);
+    jack.start(isNew, &buffer[0]);
 
     /* keep running until the Ctrl+C */
     while (isRunning) {
