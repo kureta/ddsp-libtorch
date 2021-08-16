@@ -29,6 +29,8 @@ int JackConnection::process(jack_nframes_t nframes) {
         if (data.right_phase >= TABLE_SIZE) data.right_phase -= TABLE_SIZE;
     }
 
+    *this->isNew = false;
+
     return 0;
 }
 
@@ -77,7 +79,8 @@ JackConnection::JackConnection() {
     }
 }
 
-void JackConnection::start() {
+void JackConnection::start(bool* _is_new) {
+    this->isNew = _is_new;
     if (jack_activate(client)) {
         fprintf(stderr, "cannot activate client");
         exit(1);

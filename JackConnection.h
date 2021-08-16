@@ -41,7 +41,7 @@ public:
 
     void close();
 
-    void start();
+    void start(bool* _is_new);
 
     int process(jack_nframes_t nframes);
 };
